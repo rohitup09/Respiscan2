@@ -1,9 +1,10 @@
 import streamlit as st
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras.applications import resnet as rt
 from PIL import Image
 from keras.models import load_model
-from tensorflow.keras.applications.resnet import preprocess_input
+from tensorflow.keras.utils import img_to_array
 
 # Load the saved model
 model = load_model('ModelWeights.h5')
@@ -13,9 +14,9 @@ class_labels = ['ACA', 'N', 'SCC']  # Replace with your actual class labels
 
 def preprocess_image(image):
     image = image.resize((224, 224))  # Resize image to match model input size
-    image_array = np.array(image)
-    processed_image = preprocess_input(image_array)  # Preprocess image using ResNet preprocessing
-    return processed_image
+    imagen = img_to_array(image)  # Normalize pixel values to [0, 1]
+    imageb = np.expand_dims(imagen, axis=0)  # Add batch dimension
+    return imageb.copy()
 
 def main():
     st.title("Image Classification App")
@@ -30,14 +31,18 @@ def main():
         if st.button("Predict"):
             # Preprocess the image
             input_image = preprocess_image(image)
-            input_batch = np.expand_dims(input_image, axis=0)
-
+            processed_image = rt.preprocess_input(input_image)
             # Perform prediction
-            predictions = model.predict(input_batch)
-            predicted_class_idx = np.argmax(predictions[0])
-            predicted_class = class_labels[predicted_class_idx]
-
-            st.write(f"Predicted class: {predicted_class}")
+            predictions = model.predict(processed_image)
+            # st.write(predictions)
+            predicted_class = np.argmax(predictions, axis = 1)
+            #Adenocarcinoma, Normal, Squamous Cell Carcinoma
+            if(predicted_class == [0]):
+                st.write(f"Predicted class: Adenocarcinoma")
+            elif(predicted_class == [1]):
+                st.write(f"Predicted class: Benign Tissue")
+            else:
+                st.write(f"Predicted class: Squamous Cell Carcinoma")
 
 if __name__ == "__main__":
     main()
