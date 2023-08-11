@@ -7,3 +7,5 @@ pandas
 daal4py
 scikit-learn
 flask
+load_model
+keras
